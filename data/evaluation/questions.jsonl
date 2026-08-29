@@ -1,0 +1,20 @@
+{"question_id":"Q01","query":"When is multi-factor authentication required and which authentication methods can employees use?","expected_chunk_id":"SEC-01","role":"all_employees"}
+{"question_id":"Q02","query":"What is the minimum password length and how many previous passwords cannot be reused?","expected_chunk_id":"SEC-02","role":"all_employees"}
+{"question_id":"Q03","query":"What controls apply to privileged administrator accounts and elevation windows?","expected_chunk_id":"SEC-03","role":"it_admin"}
+{"question_id":"Q04","query":"How often must managers certify access and when should unnecessary access be removed?","expected_chunk_id":"SEC-04","role":"manager"}
+{"question_id":"Q05","query":"What device and VPN controls are required for remote access?","expected_chunk_id":"SEC-05","role":"all_employees"}
+{"question_id":"Q06","query":"How quickly must a Severity 1 security incident be escalated?","expected_chunk_id":"IR-01","role":"security"}
+{"question_id":"Q07","query":"How should an employee report suspected phishing or malware?","expected_chunk_id":"IR-02","role":"all_employees"}
+{"question_id":"Q08","query":"Which short-term actions may the incident commander use to contain a compromise?","expected_chunk_id":"IR-03","role":"it_ops"}
+{"question_id":"Q09","query":"What information is required in the chain of custody when preserving incident evidence?","expected_chunk_id":"IR-04","role":"legal"}
+{"question_id":"Q10","query":"Who may release incident statements to regulators, customers, or the media?","expected_chunk_id":"IR-05","role":"communications"}
+{"question_id":"Q11","query":"What are the four enterprise data classification levels?","expected_chunk_id":"DG-01","role":"all_employees"}
+{"question_id":"Q12","query":"What must happen before records are disposed and how long is disposal evidence retained?","expected_chunk_id":"DG-02","role":"legal"}
+{"question_id":"Q13","query":"Which dimensions and controls are required for critical data quality?","expected_chunk_id":"DG-03","role":"data_engineer"}
+{"question_id":"Q14","query":"Which approvals and agreements are required before externally sharing restricted data?","expected_chunk_id":"DG-04","role":"legal"}
+{"question_id":"Q15","query":"Where must employees book business travel and when is economy class required?","expected_chunk_id":"TE-01","role":"all_employees"}
+{"question_id":"Q16","query":"What is the daily reimbursement limit for meals during business travel?","expected_chunk_id":"TE-02","role":"all_employees"}
+{"question_id":"Q17","query":"At what expense amount is an itemized receipt mandatory?","expected_chunk_id":"TE-03","role":"all_employees"}
+{"question_id":"Q18","query":"What due diligence is required before onboarding a vendor that handles company data?","expected_chunk_id":"VM-01","role":"procurement"}
+{"question_id":"Q19","query":"What cyber insurance and liability clauses are required in vendor contracts?","expected_chunk_id":"VM-02","role":"legal"}
+{"question_id":"Q20","query":"What are the RTO and RPO targets for Tier 1 critical services?","expected_chunk_id":"BC-01","role":"continuity"}
