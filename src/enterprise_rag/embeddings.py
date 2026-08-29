@@ -41,6 +41,53 @@ class HashingEmbeddingProvider:
         return [self.embed(text) for text in texts]
 
 
+class MiniLMEmbeddingProvider:
+    """Production semantic embeddings powered by all-MiniLM-L6-v2."""
+
+    MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+
+    def __init__(
+        self,
+        model_name: str = MODEL_NAME,
+        dimensions: int = 384,
+    ) -> None:
+        if dimensions <= 0:
+            raise ValueError("dimensions must be positive")
+
+        try:
+            from fastembed import TextEmbedding
+        except ImportError as exc:
+            raise RuntimeError(
+                "FastEmbed is required for MiniLM embeddings. "
+                "Install the project dependencies with: python -m pip install -e ."
+            ) from exc
+
+        self.model_name = model_name
+        self.dimensions = dimensions
+        self._model = TextEmbedding(model_name=model_name)
+
+    def embed(self, text: str) -> list[float]:
+        return self.embed_many([text])[0]
+
+    def embed_many(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+
+        vectors = [
+            [float(value) for value in vector]
+            for vector in self._model.embed(texts)
+        ]
+
+        for vector in vectors:
+            if len(vector) != self.dimensions:
+                raise RuntimeError(
+                    f"Expected {self.dimensions} embedding dimensions, "
+                    f"received {len(vector)}"
+                )
+
+        return vectors
+
+
 def cosine_similarity(left: list[float], right: list[float]) -> float:
     if len(left) != len(right):
         raise ValueError("vectors must have equal dimensions")

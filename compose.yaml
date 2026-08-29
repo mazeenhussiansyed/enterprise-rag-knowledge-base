@@ -1,0 +1,15 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.0
+    container_name: enterprise-rag-qdrant
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+volumes:
+  qdrant_data:
+    name: enterprise-rag-qdrant-data

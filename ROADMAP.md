@@ -1,65 +1,125 @@
 # P02-RAG Roadmap
 
+## Current checkpoint
+
+Milestones M00–M03 are complete. The project currently provides document ingestion, persistent semantic indexing, role-filtered hybrid retrieval, evidence output and reproducible evaluation.
+
+The next milestone is M04: retrieval robustness, optional metadata filters and refusal evaluation.
+
 ## M00 - Scope and evidence contract - Complete
 
-- Define the employee-search problem, users, non-goals and security boundary.
-- Freeze the evaluation protocol before tuning retrieval.
-- Record every measured claim in `METRICS.md`.
+- Defined the employee-policy search problem and security boundary.
+- Froze the evaluation protocol before production retrieval changes.
+- Required every measured claim to be recorded in `METRICS.md`.
+- Separated verified metrics from targets and future claims.
 
 ## M01 - Controlled corpus and offline baseline - Complete
 
-- Build 26 synthetic policy chunks with versions, departments and access roles.
-- Write 20 answerable benchmark questions with expected chunks.
-- Implement deterministic 384-dimensional hashing embeddings and BM25.
-- Measure vector, BM25 and 70/30 hybrid retrieval.
-- Test that unauthorized chunks never enter the candidate set.
+- Built 26 synthetic policy chunks with versions, departments and access roles.
+- Created 20 answerable benchmark questions with expected chunks.
+- Implemented deterministic 384-dimensional hashing embeddings.
+- Implemented BM25 keyword retrieval.
+- Implemented 70% vector and 30% BM25 score fusion.
+- Measured Hit@1, Hit@3, MRR and latency.
+- Verified that unauthorized chunks do not enter the baseline candidate set.
 
 ## M02 - Production ingestion - Complete
 
 - Parse PDF, DOCX, TXT and Markdown.
-- Add file sanitization, checksums, version lineage and duplicate-safe ingestion.
-- Implement 500-character chunks with 50-character overlap and page metadata.
-- Preserve document title, version, effective date, department and access roles.
+- Sanitize filenames and reject path traversal.
+- Validate document metadata.
+- Calculate SHA-256 file checksums.
+- Detect identical duplicate files.
+- Reject changed content that reuses an immutable version.
+- Preserve document-version lineage.
+- Generate page-aware 500-character chunks with 50-character overlap.
+- Write chunk output atomically.
+- Maintain an ingestion ledger.
 
-## M03 - MiniLM and Qdrant
+## M03 - MiniLM and Qdrant - Complete, 2026-08-29
 
-- Replace the hashing baseline with `all-MiniLM-L6-v2` embeddings.
-- Create the Qdrant collection with 384-dimensional cosine vectors.
-- Apply role, department, status and version filters inside Qdrant.
-- Compare vector-only, BM25-only and hybrid retrieval on the frozen benchmark.
+- Added `all-MiniLM-L6-v2` through FastEmbed and ONNX Runtime.
+- Verified normalized 384-dimensional semantic vectors.
+- Added Qdrant Python client v1.19.0.
+- Deployed Qdrant v1.19.0 through Docker.
+- Added persistent named-volume storage.
+- Added reproducible `compose.yaml` infrastructure.
+- Created a 384-dimensional cosine-distance collection.
+- Indexed roles, chunk IDs, document IDs, departments and versions.
+- Used deterministic UUIDs for duplicate-safe upserts.
+- Indexed and retained all 26 benchmark chunks.
+- Enforced role filtering inside Qdrant.
+- Combined Qdrant candidates with authorized BM25 results.
+- Added a command-line evidence-search interface.
+- Compared vector, BM25 and hybrid retrieval on the frozen benchmark.
+- Achieved 100% Hit@1, 100% Hit@3 and 1.000 MRR for production hybrid retrieval.
+- Verified zero restricted `VM-02` leakage to the employee role.
+- Passed 13 unit and live integration tests.
+- Recorded all measured results in `METRICS.md`.
 
-## M04 - Retrieval quality
+## M04 - Retrieval robustness and refusal - Next
 
-- Tune the vector/BM25 weighting without changing the test answers.
-- Add optional cross-encoder reranking.
-- Measure hit@1, hit@3, MRR, latency and access leakage.
-- Add an answerability threshold and test refusal questions.
+- Add optional department and document-version query filters.
+- Propagate active/inactive document status into chunk payloads.
+- Build separate development and held-out evaluation subsets.
+- Add paraphrased, ambiguous, adversarial and unanswerable questions.
+- Add an evidence-strength answerability threshold.
+- Test refusal behavior when evidence is absent or weak.
+- Measure access leakage across every restricted role.
+- Repeat latency measurements across multiple benchmark runs.
+- Add optional cross-encoder reranking only if larger evaluations show a measurable benefit.
+- Avoid tuning against frozen expected answers.
 
-## M05 - Generation and citations
+## M05 - Generation and citations - Planned
 
-- Build grounded prompts using only retrieved chunks.
+- Build grounded prompts using only authorized retrieved evidence.
+- Generate natural-language answers from accepted evidence.
 - Return source title, section, page, version and relevance score.
-- Add citation-completeness checks and unsupported-claim detection.
-- Integrate Ollama locally and Groq as a bounded fallback.
+- Add inline citations.
+- Validate citation completeness.
+- Detect unsupported factual claims.
+- Refuse answers when evidence does not pass the threshold.
+- Integrate a local generation provider.
+- Evaluate any hosted fallback separately before enabling it.
 
-## M06 - API, streaming and cache
+## M06 - API, streaming and cache - Planned
 
-- Expose ingestion, query, streaming, health, stats and document endpoints.
-- Stream citations before answer tokens using SSE.
-- Add Redis answer caching, BM25-index caching and rate limiting.
+- Expose ingestion, query, health, statistics and document endpoints.
+- Add structured request and response validation.
+- Stream citations before answer tokens using Server-Sent Events.
+- Add rate limiting and request logging.
+- Add Redis caching only after retrieval and generation correctness are stable.
 - Benchmark cold, warm and cache-hit latency.
 
-## M07 - Interface and deployment
+## M07 - Interface, CI and deployment - Planned
 
-- Build the Next.js upload, search, source viewer and evaluation dashboard.
-- Containerize backend, frontend, Qdrant and Redis.
-- Add CI, deployment configuration and a two-minute demo.
+- Build document upload and search interfaces.
+- Add a source and citation viewer.
+- Add an evaluation dashboard.
+- Containerize the complete application stack.
+- Add automated CI for unit tests and integration tests.
+- Add deployment configuration.
+- Record a reproducible two-minute demonstration.
 
-## Definition of done
+## Retrieval milestone definition of done
 
-- Fresh-machine quick start works.
-- All automated tests pass.
-- The 20-question benchmark is reproducible.
-- Access-control leakage is zero on the security test set.
-- Every answer shows evidence or refuses.
-- Resume metrics are replaced by this repository's verified results.
+- MiniLM generates normalized 384-dimensional embeddings.
+- Qdrant persists vectors across container replacement.
+- Re-indexing does not create duplicate points.
+- Vector, BM25 and hybrid strategies are independently measurable.
+- Role filtering prevents restricted-vector leakage.
+- Search results contain evidence and lineage metadata.
+- All 13 retrieval and ingestion tests pass.
+- Setup and execution commands are documented.
+- Verified metrics are recorded without production-scale overclaims.
+
+## Final project definition of done
+
+- Fresh-machine quick start is independently verified.
+- A larger held-out benchmark is reproducible.
+- Access-control leakage is zero across the security test set.
+- Unsupported questions are refused.
+- Every generated answer contains validated evidence citations.
+- API and interface tests pass.
+- CI executes unit and integration checks.
+- Resume metrics are supported by repository evidence.
