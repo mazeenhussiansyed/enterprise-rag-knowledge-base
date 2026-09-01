@@ -1,0 +1,3 @@
+{"question_id":"R01","query":"What meals are served in the company cafeteria?","role":"all_employees","expected_status":"refused"}
+{"question_id":"R02","query":"What is the capital city of Japan?","role":"all_employees","expected_status":"refused"}
+{"question_id":"R03","query":"How do I repair a car engine?","role":"all_employees","expected_status":"refused"}

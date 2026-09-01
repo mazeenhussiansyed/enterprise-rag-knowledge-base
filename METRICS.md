@@ -7,7 +7,7 @@ Only rows marked **Yes** may be used as measured project evidence.
 | Metric | Configuration | Result | Evidence command | Verified |
 |---|---|---:|---|---|
 | Corpus chunks | synthetic policy pack v1 | 26 | `python scripts/evaluate_retrieval.py` | Yes, 2026-08-20 |
-| Evaluation questions | frozen benchmark v1 | 20 | `python scripts/evaluate_retrieval.py` | Yes, 2026-08-20 |
+| Evaluation questions | benchmark v1 | 20 | `python scripts/evaluate_retrieval.py` | Yes, 2026-08-20 |
 | Hashing-vector hit@1 | deterministic, 384 dimensions | 85% | `python scripts/evaluate_retrieval.py` | Yes, 2026-08-20 |
 | Hashing-vector hit@3 | deterministic, 384 dimensions | 95% | `python scripts/evaluate_retrieval.py` | Yes, 2026-08-20 |
 | BM25 hit@1 | k1=1.5, b=0.75 | 100% | `python scripts/evaluate_retrieval.py` | Yes, 2026-08-20 |
@@ -47,37 +47,44 @@ Only rows marked **Yes** may be used as measured project evidence.
 | Production hybrid MRR | 70% MiniLM/Qdrant, 30% BM25 | 1.000 | `python scripts/evaluate_qdrant.py` | Yes, 2026-08-29 |
 | Production hybrid median latency | local warm model and Qdrant | 15.940 ms | `python scripts/evaluate_qdrant.py` | Yes, 2026-08-29 |
 | Production hybrid p95 latency | local warm model and Qdrant | 24.991 ms | `python scripts/evaluate_qdrant.py` | Yes, 2026-08-29 |
-| Unauthorized restricted retrievals | employee attempt to retrieve `VM-02` | 0 | Qdrant integration tests | Yes, 2026-08-29 |
-| Complete automated suite | unit and live integration tests | 13/13 passed | `RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v` | Yes, 2026-08-29 |
-| Container persistence | restart through Docker Compose | 26/26 points retained | Qdrant count verification command | Yes, 2026-08-29 |
 
 ## M04 governed incremental synchronization
 
 | Metric | Configuration | Result | Evidence command | Verified |
 |---|---|---:|---|---|
-| Missing-vector recovery | ledger version present, governed collection empty | 6/6 chunks restored | governed sync command for `SEC-POLICY` v1.0 | Yes, 2026-09-01 |
-| Recovery duration | MiniLM embedding and Qdrant upsert | 1,920.320 ms | first governed sync run | Yes, 2026-09-01 |
-| Duplicate rerun embeddings | identical checksum and complete vector state | 0 | repeat governed sync command | Yes, 2026-09-01 |
-| Duplicate rerun duration | no embedding or upsert work | 61.631 ms | repeat governed sync command | Yes, 2026-09-01 |
-| Duplicate rerun speedup | recovery duration divided by skip duration | 31.16x | governed sync audit records | Yes, 2026-09-01 |
-| New-version chunks | `SEC-POLICY` v1.1 | 7 | governed sync v1.1 command | Yes, 2026-09-01 |
-| Historical chunks deactivated | `SEC-POLICY` v1.0 | 6 | governed sync v1.1 command | Yes, 2026-09-01 |
-| Historical lineage retained | versions 1.0 and 1.1 | 13 points | Qdrant governed-state verification | Yes, 2026-09-01 |
-| Inactive-version leakage | default active-only retrieval | 0 | active-version semantic query | Yes, 2026-09-01 |
-| Active-version top results | quarterly access-review query | 3/3 from v1.1 | active-version semantic query | Yes, 2026-09-01 |
-| Best active-version score | MiniLM cosine similarity | 0.7034 | active-version semantic query | Yes, 2026-09-01 |
-| Controlled failure records | missing-document test | 1 audit + 1 quarantine | audit and quarantine verification | Yes, 2026-09-01 |
-| Complete automated suite | unit and live Qdrant tests | 17/17 passed | `RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v` | Yes, 2026-09-01 |
+| Duplicate synchronization | identical `SEC-POLICY` v1.0 source | 0 re-embedded; 6 existing vectors retained | rerun `python scripts/sync_document.py ...` | Yes, 2026-09-01 |
+| New-version synchronization | `SEC-POLICY` v1.1 | 7 indexed; 6 earlier-version chunks deactivated | `python scripts/sync_document.py ...` | Yes, 2026-09-01 |
+| Historical version retention | `SEC-POLICY` v1.0 to v1.1 | 13 total vectors; 7 active v1.1 vectors | Qdrant payload verification command | Yes, 2026-09-01 |
+| Failure audit and quarantine | missing source-file simulation | audit record and quarantine record created | invalid-source synchronization command | Yes, 2026-09-01 |
+| Governed sync test suite | unit plus live Qdrant integration | 17/17 passed | `RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v` | Yes, 2026-09-01 |
 
-## Benchmark integrity
+## M05 grounded answers, citations and refusals
 
-- Do not edit expected chunk IDs after examining failures without creating a new benchmark version.
-- Tune retrieval only on a separate development subset when the corpus grows.
-- Report the 26-chunk corpus and 20-question benchmark with every accuracy result.
-- Report latency as a local benchmark; do not present it as universal production performance.
-- A restricted query succeeds only when unauthorized evidence is excluded before ranking.
-- A refusal question succeeds only when no answer is generated from weak evidence.
+| Metric | Configuration | Result | Evidence command | Verified |
+|---|---|---:|---|---|
+| Answerable questions | controlled policy benchmark | 20 | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| Answered with citations | MiniLM/Qdrant + BM25, top 3 | 20/20 | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| Answer rate | controlled 20-question benchmark | 100% | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| Citation presence rate | cited answers / answerable questions | 100% | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| Expected-citation recall | expected chunk present in citation list | 100% | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| Unsupported questions | controlled refusal set | 3 | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| Safe-refusal rate | unsupported questions refused | 100% (3/3) | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| Unsafe answers | unsupported answers with generated evidence | 0 | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| End-to-end median latency | 23 local warm questions | 16.620 ms | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| End-to-end p95 latency | 23 local warm questions | 31.312 ms | `python scripts/evaluate_answers.py` | Yes, 2026-09-01 |
+| Complete automated suite | answer, ingestion, governed sync and live Qdrant tests | 22/22 passed | `RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v` | Yes, 2026-09-01 |
 
-## Scope warning
+## Benchmark Integrity
 
-These results measure retrieval on a deliberately small synthetic enterprise-policy benchmark. They verify ingestion, semantic indexing, hybrid ranking, persistent vector storage and access filtering, but they do not prove production-scale accuracy. Larger held-out datasets, answer generation, citations and refusal evaluation remain separate milestones.
+- Do not change expected chunk IDs after examining failures without creating a new benchmark version.
+- Report the corpus size and evaluation-question count with every quality metric.
+- Report local latency as a local benchmark, not universal production performance.
+- Authorization is successful only when unauthorized evidence is excluded before ranking.
+- A refusal is successful only when no unsupported answer or citation is returned.
+- The M05 answerability thresholds were calibrated on the controlled benchmark; use a held-out evaluation before making production-scale quality claims.
+
+## Scope Warning
+
+These results measure a deliberately small, synthetic enterprise-policy corpus. They verify ingestion, semantic indexing, hybrid ranking, persistent vector storage, access filtering, governed synchronization, citation-backed extractive answers, and refusal behavior.
+
+They do not prove production-scale accuracy, general factual correctness, or cloud-scale latency. Larger held-out datasets, adversarial testing, human answer review, an LLM provider, API observability, and deployment remain separate milestones.
