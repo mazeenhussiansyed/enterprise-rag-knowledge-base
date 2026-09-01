@@ -3,6 +3,7 @@
 from .chunking import build_chunks
 from .corpus import load_chunks, load_questions
 from .embeddings import HashingEmbeddingProvider, MiniLMEmbeddingProvider
+from .governed_sync import GovernedSyncResult, GovernedSyncService
 from .ingestion import IngestionService, sha256_file
 from .ledger import IngestionLedger
 from .models import DocumentMetadata, IngestionResult, ParsedPage
@@ -12,6 +13,8 @@ from .retrieval import HybridRetriever, QdrantHybridRetriever
 
 __all__ = [
     "DocumentMetadata",
+    "GovernedSyncResult",
+    "GovernedSyncService",
     "HashingEmbeddingProvider",
     "HybridRetriever",
     "IngestionLedger",

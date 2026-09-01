@@ -1,244 +1,84 @@
 # Enterprise Policy RAG Knowledge Base
 
-An evidence-first enterprise retrieval system that ingests governed documents, generates semantic embeddings, stores vectors persistently, enforces role-based access and returns traceable evidence for downstream RAG applications.
+An evidence-first enterprise retrieval system with production document ingestion, MiniLM embeddings, Qdrant vector storage, BM25 hybrid ranking, role-based access control and governed incremental synchronization.
 
-## Current status
+The project separates ingestion, storage, retrieval and evaluation so every stage can be tested and measured independently.
 
-Milestones M01–M03 are complete:
+## Current project status
 
-- PDF, DOCX, TXT and Markdown parsing
-- SHA-256 duplicate detection and immutable version lineage
-- Page-aware 500-character chunks with 50-character overlap
-- 26 role-tagged benchmark chunks and 20 frozen questions
-- 384-dimensional `all-MiniLM-L6-v2` embeddings
-- Persistent Qdrant v1.19.0 vector storage
-- Deterministic UUID upserts without duplicate points
-- BM25 keyword retrieval
-- 70% MiniLM/Qdrant and 30% BM25 hybrid ranking
-- Role-based filtering before vector ranking
-- Evidence text and citation metadata in search results
-- Unit and live integration tests
-- Reproducible Docker Compose infrastructure
+Milestones M00 through M04 are complete:
 
-The final answer-generation, citation-formatting and refusal layer remains a subsequent milestone.
+- controlled enterprise-policy corpus and frozen benchmark;
+- offline deterministic retrieval baseline;
+- PDF, DOCX, TXT and Markdown ingestion;
+- checksum-based duplicate and version control;
+- MiniLM semantic embeddings and persistent Qdrant storage;
+- BM25 and 70/30 hybrid retrieval;
+- role-based authorization before ranking;
+- governed incremental ingestion-to-Qdrant synchronization;
+- active and historical document-version management;
+- audit records, quarantine manifests and recovery testing.
 
-## Verified benchmark
+## Verified retrieval results
 
-Measured locally on the frozen 26-chunk, 20-question benchmark:
+Measured on a controlled 26-chunk corpus and 20-question frozen benchmark:
 
-| Strategy | Hit@1 | Hit@3 | MRR | Median latency | P95 latency |
-|---|---:|---:|---:|---:|---:|
-| Hashing-vector baseline | 85% | 95% | 0.8917 | 0.364 ms | 0.619 ms |
-| Baseline hybrid | 95% | 100% | 0.975 | 0.364 ms | 0.601 ms |
-| MiniLM + Qdrant | 100% | 100% | 1.000 | 25.614 ms | 42.301 ms |
-| BM25 production path | 100% | 100% | 1.000 | 0.032 ms | 0.052 ms |
-| MiniLM/Qdrant + BM25 hybrid | 100% | 100% | 1.000 | 15.940 ms | 24.991 ms |
+| Strategy | Hit@1 | Hit@3 | MRR |
+|---|---:|---:|---:|
+| Hashing-vector baseline | 85% | 95% | 0.8917 |
+| Baseline BM25 | 100% | 100% | 1.000 |
+| Baseline hybrid | 95% | 100% | 0.975 |
+| MiniLM and Qdrant vector | 100% | 100% | 1.000 |
+| Production 70/30 hybrid | 100% | 100% | 1.000 |
 
-Additional verified results:
+Local production-hybrid latency:
 
-- 26/26 chunks stored in Qdrant
-- 384-dimensional normalized MiniLM vectors
-- 18.50 chunks/second during initial collection creation
-- 89.49 chunks/second during a warm idempotent upsert
-- 0 duplicate points after re-indexing
-- 0 unauthorized `VM-02` retrievals in the employee-role test
-- 26/26 vectors retained after migrating to Docker Compose
-- 13/13 unit and live integration tests passed
+- Median: 15.940 ms
+- P95: 24.991 ms
+- Unauthorized restricted retrievals: 0
 
-See `METRICS.md` for evidence commands and scope limitations.
+These results describe a deliberately small synthetic benchmark and are not claims of universal production accuracy.
+
+## Verified synchronization results
+
+| Check | Result |
+|---|---:|
+| Missing vectors automatically recovered | 6/6 |
+| Duplicate rerun embeddings generated | 0 |
+| Duplicate rerun duration | 61.631 ms |
+| Recovery-to-skip speedup | 31.16x |
+| New version chunks indexed | 7 |
+| Previous-version chunks deactivated | 6 |
+| Historical vectors retained | 13 |
+| Inactive-version retrieval leakage | 0 |
+| Active-version top results | 3/3 |
+| Automated tests with live Qdrant | 17/17 passed |
+
+See `METRICS.md` and `docs/evaluation/GOVERNED_SYNC_M04.md` for evidence and scope.
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    A["PDF, DOCX, TXT and Markdown"] --> B["Parse, validate and version"]
-    B --> C["500/50 governed chunks"]
-    C --> D["MiniLM 384-dimensional embeddings"]
-    D --> E[("Qdrant vector database")]
-    C --> F["BM25 keyword index"]
-    E --> G["Role-filtered 70/30 fusion"]
-    F --> G
-    G --> H["Ranked evidence and citation metadata"]
-```
-
-## Prerequisites
-
-- Linux, macOS or WSL2/Ubuntu
-- Python 3.11 or later
-- Docker Desktop or Docker Engine with Compose
-- Git
-
-No API key or paid cloud account is required for the completed retrieval milestones.
-
-## Start the project
-
-From WSL/Ubuntu:
-
-```bash
-cd ~/portfolio-lab/projects/p02-enterprise-rag-knowledge-base
-
-python3 -m venv .venv
-source .venv/bin/activate
-
-python -m pip install -e .
-docker compose up -d
-```
-
-Confirm Qdrant is available:
-
-```bash
-curl -sS http://localhost:6333/collections
-```
-
-Index the benchmark corpus:
-
-```bash
-python scripts/index_corpus_qdrant.py
-```
-
-The first embedding run downloads approximately 91 MB for the public MiniLM model. Later runs use the local model cache.
-
-## Search the knowledge base
-
-Run a role-filtered hybrid search:
-
-```bash
-python scripts/search_knowledge_base.py \
-  "When is multi-factor authentication required and which authentication methods can employees use?" \
-  --role all_employees \
-  --strategy hybrid \
-  --top-k 3
-```
-
-Supported strategies:
-
 ```text
-vector
-bm25
-hybrid
-```
-
-Each result includes:
-
-- rank and retrieval scores
-- chunk and document identifiers
-- title and section
-- document version and effective date
-- department and source information
-- page number when available
-- original evidence text
-
-## Run the benchmark
-
-Offline hashing/BM25 baseline:
-
-```bash
-python scripts/evaluate_retrieval.py
-```
-
-Production MiniLM, Qdrant and BM25 benchmark:
-
-```bash
-python scripts/evaluate_qdrant.py
-```
-
-Both benchmarks report Hit@1, Hit@3, MRR, median latency, P95 latency and failed questions.
-
-## Run tests
-
-Run the offline unit-test suite:
-
-```bash
-python -m unittest discover -s tests -v
-```
-
-Run all unit and live Qdrant integration tests:
-
-```bash
-RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v
-```
-
-The live integration suite requires Qdrant to be running and the corpus to be indexed.
-
-## Ingest a document
-
-The repository includes a safe Markdown policy example:
-
-```bash
-python scripts/ingest_document.py \
-  data/sample_documents/security_access_policy.md \
-  --document-id SEC-POLICY \
-  --title "Information Security Access Policy" \
-  --version 1.0 \
-  --effective-date 2026-08-20 \
-  --department "Information Security" \
-  --roles all
-```
-
-The first run returns `created`. Running the identical command again returns `duplicate` with the same SHA-256 checksum.
-
-If the content changes while the document ID and version remain unchanged, ingestion rejects the conflict. Use a new version such as `1.1` to create valid lineage.
-
-Generated ingestion data is stored under:
-
-```text
-data/ingestion/ledger.json
-data/ingested/<document-id>/v<version>/chunks.jsonl
-```
-
-## Docker operations
-
-Check the service:
-
-```bash
-docker compose ps
-```
-
-Stop Qdrant while preserving its vectors:
-
-```bash
-docker compose down
-```
-
-Restart it:
-
-```bash
-docker compose up -d
-```
-
-Do not add `-v` to `docker compose down` unless you intentionally want to delete the persistent vector volume.
-
-The Qdrant dashboard is available at:
-
-```text
-http://localhost:6333/dashboard
-```
-
-## Project structure
-
-```text
-data/                       benchmark and sample documents
-docs/                       architecture and evaluation records
-scripts/                    ingestion, indexing, search and evaluation commands
-src/enterprise_rag/         reusable project modules
-tests/                      unit and Qdrant integration tests
-compose.yaml                reproducible Qdrant service
-METRICS.md                  verified evidence and measured results
-ROADMAP.md                  remaining milestones
-```
-
-## Security and evaluation principles
-
-- Authorization filtering occurs before ranked vector results are returned.
-- Document IDs, versions, checksums and source locations remain attached to evidence.
-- Deterministic point IDs make repeated indexing idempotent.
-- Expected benchmark answers must not be silently changed after examining failures.
-- Accuracy results must always be reported with corpus and question counts.
-- Local latency measurements must not be presented as universal production performance.
-- The system must refuse unsupported answers when the generation layer is added.
-
-## Current limitations
-
-The benchmark is deliberately small and synthetic. Its perfect retrieval score verifies the implementation and evaluation pipeline but does not establish production-scale accuracy.
-
-The current system returns ranked evidence rather than a generated natural-language answer. Larger held-out corpora, answer generation, citation completeness, weak-evidence refusal, API delivery and a user interface remain future milestones.
+Enterprise documents
+        |
+        v
+Validation and parsing
+        |
+        v
+SHA-256 duplicate and version checks
+        |
+        v
+500-character chunks with 50-character overlap
+        |
+        +--------------------+
+        |                    |
+        v                    v
+MiniLM embeddings        BM25 index
+        |                    |
+        v                    |
+Qdrant vector storage       |
+        |                    |
+        +------ 70/30 hybrid ranking
+                         |
+                         v
+Role, status and active-version evidence

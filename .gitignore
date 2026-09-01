@@ -7,4 +7,6 @@ artifacts/
 data/index/
 data/ingestion/
 data/ingested/
+data/audit/
+data/quarantine/
 *.egg-info/
