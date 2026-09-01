@@ -51,6 +51,24 @@ Only rows marked **Yes** may be used as measured project evidence.
 | Complete automated suite | unit and live integration tests | 13/13 passed | `RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v` | Yes, 2026-08-29 |
 | Container persistence | restart through Docker Compose | 26/26 points retained | Qdrant count verification command | Yes, 2026-08-29 |
 
+## M04 governed incremental synchronization
+
+| Metric | Configuration | Result | Evidence command | Verified |
+|---|---|---:|---|---|
+| Missing-vector recovery | ledger version present, governed collection empty | 6/6 chunks restored | governed sync command for `SEC-POLICY` v1.0 | Yes, 2026-09-01 |
+| Recovery duration | MiniLM embedding and Qdrant upsert | 1,920.320 ms | first governed sync run | Yes, 2026-09-01 |
+| Duplicate rerun embeddings | identical checksum and complete vector state | 0 | repeat governed sync command | Yes, 2026-09-01 |
+| Duplicate rerun duration | no embedding or upsert work | 61.631 ms | repeat governed sync command | Yes, 2026-09-01 |
+| Duplicate rerun speedup | recovery duration divided by skip duration | 31.16x | governed sync audit records | Yes, 2026-09-01 |
+| New-version chunks | `SEC-POLICY` v1.1 | 7 | governed sync v1.1 command | Yes, 2026-09-01 |
+| Historical chunks deactivated | `SEC-POLICY` v1.0 | 6 | governed sync v1.1 command | Yes, 2026-09-01 |
+| Historical lineage retained | versions 1.0 and 1.1 | 13 points | Qdrant governed-state verification | Yes, 2026-09-01 |
+| Inactive-version leakage | default active-only retrieval | 0 | active-version semantic query | Yes, 2026-09-01 |
+| Active-version top results | quarterly access-review query | 3/3 from v1.1 | active-version semantic query | Yes, 2026-09-01 |
+| Best active-version score | MiniLM cosine similarity | 0.7034 | active-version semantic query | Yes, 2026-09-01 |
+| Controlled failure records | missing-document test | 1 audit + 1 quarantine | audit and quarantine verification | Yes, 2026-09-01 |
+| Complete automated suite | unit and live Qdrant tests | 17/17 passed | `RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v` | Yes, 2026-09-01 |
+
 ## Benchmark integrity
 
 - Do not edit expected chunk IDs after examining failures without creating a new benchmark version.

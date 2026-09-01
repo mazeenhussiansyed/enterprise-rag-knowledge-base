@@ -1,125 +1,76 @@
 # P02-RAG Roadmap
 
-## Current checkpoint
-
-Milestones M00–M03 are complete. The project currently provides document ingestion, persistent semantic indexing, role-filtered hybrid retrieval, evidence output and reproducible evaluation.
-
-The next milestone is M04: retrieval robustness, optional metadata filters and refusal evaluation.
-
 ## M00 - Scope and evidence contract - Complete
 
-- Defined the employee-policy search problem and security boundary.
-- Froze the evaluation protocol before production retrieval changes.
-- Required every measured claim to be recorded in `METRICS.md`.
-- Separated verified metrics from targets and future claims.
+- Define the enterprise-policy search problem, users, non-goals and security boundary.
+- Freeze the evaluation protocol before tuning retrieval.
+- Record measured claims in `METRICS.md`.
 
 ## M01 - Controlled corpus and offline baseline - Complete
 
-- Built 26 synthetic policy chunks with versions, departments and access roles.
-- Created 20 answerable benchmark questions with expected chunks.
-- Implemented deterministic 384-dimensional hashing embeddings.
-- Implemented BM25 keyword retrieval.
-- Implemented 70% vector and 30% BM25 score fusion.
-- Measured Hit@1, Hit@3, MRR and latency.
-- Verified that unauthorized chunks do not enter the baseline candidate set.
+- Build 26 synthetic policy chunks with versions, departments and roles.
+- Write 20 ground-truth questions with expected chunks.
+- Implement deterministic 384-dimensional hashing embeddings and BM25.
+- Measure vector, BM25 and 70/30 hybrid retrieval.
+- Test that unauthorized chunks never enter the candidate set.
 
 ## M02 - Production ingestion - Complete
 
 - Parse PDF, DOCX, TXT and Markdown.
-- Sanitize filenames and reject path traversal.
-- Validate document metadata.
-- Calculate SHA-256 file checksums.
-- Detect identical duplicate files.
-- Reject changed content that reuses an immutable version.
-- Preserve document-version lineage.
-- Generate page-aware 500-character chunks with 50-character overlap.
-- Write chunk output atomically.
-- Maintain an ingestion ledger.
+- Add file sanitization, checksums, version lineage and duplicate-safe ingestion.
+- Implement 500-character chunks with 50-character overlap.
+- Preserve document, page, version, department and role metadata.
 
-## M03 - MiniLM and Qdrant - Complete, 2026-08-29
+## M03 - MiniLM and Qdrant retrieval - Complete
 
-- Added `all-MiniLM-L6-v2` through FastEmbed and ONNX Runtime.
-- Verified normalized 384-dimensional semantic vectors.
-- Added Qdrant Python client v1.19.0.
-- Deployed Qdrant v1.19.0 through Docker.
-- Added persistent named-volume storage.
-- Added reproducible `compose.yaml` infrastructure.
-- Created a 384-dimensional cosine-distance collection.
-- Indexed roles, chunk IDs, document IDs, departments and versions.
-- Used deterministic UUIDs for duplicate-safe upserts.
-- Indexed and retained all 26 benchmark chunks.
-- Enforced role filtering inside Qdrant.
-- Combined Qdrant candidates with authorized BM25 results.
-- Added a command-line evidence-search interface.
-- Compared vector, BM25 and hybrid retrieval on the frozen benchmark.
-- Achieved 100% Hit@1, 100% Hit@3 and 1.000 MRR for production hybrid retrieval.
-- Verified zero restricted `VM-02` leakage to the employee role.
-- Passed 13 unit and live integration tests.
-- Recorded all measured results in `METRICS.md`.
+- Generate 384-dimensional `all-MiniLM-L6-v2` embeddings.
+- Store deterministic vector points in Qdrant.
+- Apply role filters before semantic ranking.
+- Combine Qdrant vector retrieval with BM25 using 70/30 weights.
+- Evaluate vector, BM25 and hybrid retrieval on the frozen benchmark.
+- Verify persistence through Docker Compose and automated integration tests.
 
-## M04 - Retrieval robustness and refusal - Next
+## M04 - Governed incremental synchronization - Complete
 
-- Add optional department and document-version query filters.
-- Propagate active/inactive document status into chunk payloads.
-- Build separate development and held-out evaluation subsets.
-- Add paraphrased, ambiguous, adversarial and unanswerable questions.
-- Add an evidence-strength answerability threshold.
-- Test refusal behavior when evidence is absent or weak.
-- Measure access leakage across every restricted role.
-- Repeat latency measurements across multiple benchmark runs.
-- Add optional cross-encoder reranking only if larger evaluations show a measurable benefit.
-- Avoid tuning against frozen expected answers.
+- Synchronize successful ingestion results directly with Qdrant.
+- Add active, status, department, version and run-ID governance metadata.
+- Skip complete duplicate runs without regenerating embeddings.
+- Repair ledger and vector-store inconsistencies automatically.
+- Deactivate previous versions while retaining historical vectors.
+- Record JSONL pipeline audit metrics and failure quarantine manifests.
+- Verify point counts after each synchronization.
+- Test recovery, idempotency, version transitions and failure handling.
 
-## M05 - Generation and citations - Planned
+## M05 - Retrieval quality, answers and citations
 
-- Build grounded prompts using only authorized retrieved evidence.
-- Generate natural-language answers from accepted evidence.
+- Add answerability thresholds and refusal questions.
+- Evaluate optional reranking without changing frozen answers.
+- Build grounded prompts using only retrieved evidence.
 - Return source title, section, page, version and relevance score.
-- Add inline citations.
-- Validate citation completeness.
-- Detect unsupported factual claims.
-- Refuse answers when evidence does not pass the threshold.
-- Integrate a local generation provider.
-- Evaluate any hosted fallback separately before enabling it.
+- Measure citation completeness and unsupported claims.
+- Integrate a local generation provider and bounded hosted fallback.
 
-## M06 - API, streaming and cache - Planned
+## M06 - API, streaming and cache
 
-- Expose ingestion, query, health, statistics and document endpoints.
-- Add structured request and response validation.
-- Stream citations before answer tokens using Server-Sent Events.
-- Add rate limiting and request logging.
-- Add Redis caching only after retrieval and generation correctness are stable.
+- Expose ingestion, synchronization, query, health and statistics endpoints.
+- Stream citations and answer tokens with Server-Sent Events.
+- Add Redis caching, request validation and rate limiting.
 - Benchmark cold, warm and cache-hit latency.
 
-## M07 - Interface, CI and deployment - Planned
+## M07 - Interface and deployment
 
-- Build document upload and search interfaces.
-- Add a source and citation viewer.
-- Add an evaluation dashboard.
-- Containerize the complete application stack.
-- Add automated CI for unit tests and integration tests.
-- Add deployment configuration.
-- Record a reproducible two-minute demonstration.
+- Build document upload, governed search and source-viewer screens.
+- Display evaluation and pipeline-run metrics.
+- Containerize the application services.
+- Add CI, deployment configuration and a reproducible demonstration.
 
-## Retrieval milestone definition of done
+## Definition of done
 
-- MiniLM generates normalized 384-dimensional embeddings.
-- Qdrant persists vectors across container replacement.
-- Re-indexing does not create duplicate points.
-- Vector, BM25 and hybrid strategies are independently measurable.
-- Role filtering prevents restricted-vector leakage.
-- Search results contain evidence and lineage metadata.
-- All 13 retrieval and ingestion tests pass.
-- Setup and execution commands are documented.
-- Verified metrics are recorded without production-scale overclaims.
-
-## Final project definition of done
-
-- Fresh-machine quick start is independently verified.
-- A larger held-out benchmark is reproducible.
-- Access-control leakage is zero across the security test set.
-- Unsupported questions are refused.
-- Every generated answer contains validated evidence citations.
-- API and interface tests pass.
-- CI executes unit and integration checks.
-- Resume metrics are supported by repository evidence.
+- Fresh-machine quick start works.
+- All automated tests pass.
+- Frozen retrieval benchmarks remain reproducible.
+- Access-control leakage is zero on the security test set.
+- Historical document versions remain auditable.
+- Every synchronization run succeeds or produces a quarantine record.
+- Every generated answer shows evidence or safely refuses.
+- Resume claims use only metrics verified in `METRICS.md`.
