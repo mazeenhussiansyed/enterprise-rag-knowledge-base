@@ -142,11 +142,7 @@ def ask_policy(
 
 
 def build_demo(api_url: str) -> gr.Blocks:
-    with gr.Blocks(
-        title="Enterprise Policy RAG",
-        theme=gr.themes.Soft(),
-        css=".gradio-container { max-width: 1100px !important; }",
-    ) as demo:
+    with gr.Blocks(title="Enterprise Policy RAG") as demo:
         gr.Markdown(
             """
 # Enterprise Policy RAG
@@ -284,6 +280,8 @@ def main() -> None:
         server_name=args.host,
         server_port=args.port,
         show_error=True,
+        theme=gr.themes.Soft(),
+        css=".gradio-container { max-width: 1100px !important; }",
     )
 
 

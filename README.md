@@ -1,68 +1,58 @@
 # Enterprise Policy RAG Knowledge Base
 
-An evidence-first enterprise policy RAG system with governed document ingestion, MiniLM embeddings, Qdrant vector storage, BM25 hybrid retrieval, role-aware filtering, grounded answers, citations, safe refusals, a FastAPI service and an interactive local web demo.
+An evidence-first enterprise policy RAG system with governed ingestion, MiniLM embeddings, Qdrant vector storage, BM25 hybrid retrieval, role-aware filtering, grounded answers, citations, safe refusals, FastAPI, Gradio, Docker and GitHub Actions CI.
 
-The repository separates ingestion, storage, retrieval, answer generation and evaluation so that each layer can be tested and measured independently.
-
-## Current status
-
-Completed capabilities:
-
-- 26 synthetic enterprise-policy chunks with role and version metadata
-- 20-question frozen retrieval and answer benchmark
-- PDF, DOCX, TXT and Markdown ingestion
-- SHA-256 duplicate detection and immutable document-version lineage
-- 500-character chunks with 50-character overlap
-- MiniLM semantic embeddings using `all-MiniLM-L6-v2`
-- persistent Qdrant vector storage with deterministic point IDs
-- BM25, vector-only and 70/30 hybrid retrieval
-- role filtering before retrieval ranking
-- governed incremental synchronization with audit records and quarantine manifests
-- citation-backed extractive answers and safe refusal behavior
-- FastAPI endpoints for service health, statistics, retrieval and answers
-- Gradio-based local web interface for an interactive demonstration
-
-The corpus is deliberately small and synthetic. Results demonstrate reproducible system behavior, not production-scale accuracy.
-
-## Verified quality results
+## Verified results
 
 | Capability | Result |
 |---|---:|
 | Corpus size | 26 policy chunks |
-| Frozen answerable benchmark | 20 questions |
-| MiniLM/Qdrant hybrid hit@1 | 100% |
-| MiniLM/Qdrant hybrid hit@3 | 100% |
-| MiniLM/Qdrant hybrid MRR | 1.000 |
+| Retrieval benchmark | 20 questions |
+| Production hybrid hit@1 | 100% |
 | Expected citation recall | 100% (20/20) |
 | Safe refusal rate | 100% (3/3) |
-| Unauthorized restricted retrievals | 0 |
-| Full automated suite | 27/27 passed |
-
-See [METRICS.md](METRICS.md) for reproducible evidence and limitations.
+| Unauthorized retrievals | 0 |
+| Automated tests | 27/27 passed |
+| Containerized vectors | 26 |
 
 ## Architecture
 
-```text
-Enterprise documents
-        |
-        v
-Validation, parsing, checksums and version lineage
-        |
-        v
-500-character chunks with 50-character overlap
-        |
-        +-------------------------+
-        |                         |
-        v                         v
-MiniLM embeddings             BM25 index
-        |                         |
-        v                         |
-Qdrant vector storage          |
-        |                         |
-        +---- role-aware hybrid retrieval
-                           |
-                           v
-Answerability gate -> grounded extractive answer -> citations or safe refusal
-                           |
-                           v
-FastAPI service -> Swagger API docs and local Gradio demo
+    Documents -> validation and version lineage -> chunking
+                                                |
+                        +-----------------------+----------------------+
+                        |                                              |
+                        v                                              v
+                 MiniLM embeddings                                  BM25
+                        |                                              |
+                        +------------------ Qdrant hybrid retrieval ---+
+                                                       |
+                                                       v
+                             Grounded answer with citations or safe refusal
+                                                       |
+                                                       v
+                               FastAPI -> Gradio -> Docker Compose -> CI
+
+## Run the complete application
+
+    docker compose up --build -d --wait --wait-timeout 180
+
+Open:
+
+- Demo: http://127.0.0.1:7860
+- API documentation: http://127.0.0.1:8000/docs
+- Health check: http://127.0.0.1:8000/health
+- Qdrant dashboard: http://127.0.0.1:6333/dashboard
+
+Verify:
+
+    docker compose ps
+    curl -sS http://127.0.0.1:8000/health
+
+Run all tests:
+
+    source .venv/bin/activate
+    RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v
+
+## Scope
+
+This is a controlled synthetic benchmark demonstrating reproducible ingestion, retrieval, governance, grounded answers and local deployment. It is not a production-scale accuracy or authenticated enterprise authorization claim.

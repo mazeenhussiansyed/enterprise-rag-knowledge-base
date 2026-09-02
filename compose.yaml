@@ -1,15 +1,86 @@
+name: p02-enterprise-rag-knowledge-base
+
 services:
   qdrant:
     image: qdrant/qdrant:v1.19.0
-    container_name: enterprise-rag-qdrant
     ports:
       - "127.0.0.1:6333:6333"
       - "127.0.0.1:6334:6334"
+    restart: unless-stopped
     volumes:
       - qdrant_data:/qdrant/storage
+
+  indexer:
+    build:
+      context: .
+    command:
+      - sh
+      - -c
+      - >
+        python scripts/wait_for_qdrant.py --timeout-seconds 90 &&
+        python scripts/index_corpus_qdrant.py
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: enterprise_policy_chunks_v1
+    depends_on:
+      qdrant:
+        condition: service_started
+    restart: "no"
+    volumes:
+      - model_cache:/root/.cache
+
+  api:
+    build:
+      context: .
+    command:
+      - uvicorn
+      - enterprise_rag.api:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: enterprise_policy_chunks_v1
+      RAG_CORPUS_PATH: /app/data/corpus/chunks.jsonl
+    depends_on:
+      indexer:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8000:8000"
     restart: unless-stopped
-    stop_grace_period: 30s
+    volumes:
+      - model_cache:/root/.cache
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/health', timeout=3).read()"
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 120s
+
+  demo:
+    build:
+      context: .
+    command:
+      - python
+      - scripts/run_demo.py
+      - --api-url
+      - http://api:8000
+      - --host
+      - 0.0.0.0
+      - --port
+      - "7860"
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:7860:7860"
+    restart: unless-stopped
 
 volumes:
+  model_cache:
   qdrant_data:
-    name: enterprise-rag-qdrant-data
