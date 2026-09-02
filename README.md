@@ -1,45 +1,58 @@
-# M07 Evaluation: Containerized Deployment and Continuous Integration
+# Enterprise Policy RAG Knowledge Base
 
-**Evaluation date:** 2026-09-01  
-**Deployment mode:** Local Docker Compose  
-**Command:** `docker compose up --build -d --wait --wait-timeout 180`
+An evidence-first enterprise policy RAG system with governed ingestion, MiniLM embeddings, Qdrant vector storage, BM25 hybrid retrieval, role-aware filtering, grounded answers, citations, safe refusals, FastAPI, Gradio, Docker and GitHub Actions CI.
 
-## Verified deployment
+## Verified results
 
-| Check | Result |
+| Capability | Result |
 |---|---:|
-| Qdrant vector database | Healthy |
-| Corpus indexing | 26 stored points |
-| FastAPI service | Healthy |
-| Gradio demo | Running |
-| Local automated tests | 27/27 passed |
-| Test duration | 3.873 seconds |
+| Corpus size | 26 policy chunks |
+| Retrieval benchmark | 20 questions |
+| Production hybrid hit@1 | 100% |
+| Expected citation recall | 100% (20/20) |
+| Safe refusal rate | 100% (3/3) |
+| Unauthorized retrievals | 0 |
+| Automated tests | 27/27 passed |
+| Containerized vectors | 26 |
 
-Verified API health response:
+## Architecture
 
-```json
-{
-  "status": "ok",
-  "collection": "enterprise_policy_chunks_v1",
-  "stored_points": 26,
-  "corpus_chunks": 26,
-  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
-}
-```
+    Documents -> validation and version lineage -> chunking
+                                                |
+                        +-----------------------+----------------------+
+                        |                                              |
+                        v                                              v
+                 MiniLM embeddings                                  BM25
+                        |                                              |
+                        +------------------ Qdrant hybrid retrieval ---+
+                                                       |
+                                                       v
+                             Grounded answer with citations or safe refusal
+                                                       |
+                                                       v
+                               FastAPI -> Gradio -> Docker Compose -> CI
 
-## Reproduce locally
+## Run the complete application
 
-```bash
-docker compose down --remove-orphans
-docker compose up --build -d --wait --wait-timeout 180
-docker compose ps
-curl -sS http://127.0.0.1:8000/health
-```
+    docker compose up --build -d --wait --wait-timeout 180
 
-## Continuous integration
+Open:
 
-`.github/workflows/verify.yml` automatically builds the Docker stack, waits for the API health check, and runs the complete unit, API and live Qdrant integration test suite on pushes and pull requests.
+- Demo: http://127.0.0.1:7860
+- API documentation: http://127.0.0.1:8000/docs
+- Health check: http://127.0.0.1:8000/health
+- Qdrant dashboard: http://127.0.0.1:6333/dashboard
+
+Verify:
+
+    docker compose ps
+    curl -sS http://127.0.0.1:8000/health
+
+Run all tests:
+
+    source .venv/bin/activate
+    RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v
 
 ## Scope
 
-The Docker deployment is verified locally. GitHub Actions is configured and will be independently verified once its first workflow run completes successfully.
+This is a controlled synthetic benchmark demonstrating reproducible ingestion, retrieval, governance, grounded answers and local deployment. It is not a production-scale accuracy or authenticated enterprise authorization claim.
