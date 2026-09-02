@@ -1,12 +1,8 @@
 # Enterprise Policy RAG Knowledge Base
 
-An evidence-first enterprise policy RAG system with governed document ingestion, MiniLM embeddings, Qdrant vector storage, BM25 hybrid retrieval, role-aware filtering, grounded answers, citations, safe refusals, a FastAPI service and an interactive local web demo.
+An evidence-first enterprise policy RAG system with governed document ingestion, MiniLM embeddings, Qdrant vector storage, BM25 hybrid retrieval, role-aware filtering, grounded answers, citations, safe refusals, a FastAPI service, an interactive web demo, Docker deployment and continuous integration.
 
-The repository separates ingestion, storage, retrieval, answer generation and evaluation so that each layer can be tested and measured independently.
-
-## Current status
-
-Completed capabilities:
+## Completed capabilities
 
 - 26 synthetic enterprise-policy chunks with role and version metadata
 - 20-question frozen retrieval and answer benchmark
@@ -14,15 +10,15 @@ Completed capabilities:
 - SHA-256 duplicate detection and immutable document-version lineage
 - 500-character chunks with 50-character overlap
 - MiniLM semantic embeddings using `all-MiniLM-L6-v2`
-- persistent Qdrant vector storage with deterministic point IDs
-- BM25, vector-only and 70/30 hybrid retrieval
-- role filtering before retrieval ranking
-- governed incremental synchronization with audit records and quarantine manifests
-- citation-backed extractive answers and safe refusal behavior
-- FastAPI endpoints for service health, statistics, retrieval and answers
-- Gradio-based local web interface for an interactive demonstration
-
-The corpus is deliberately small and synthetic. Results demonstrate reproducible system behavior, not production-scale accuracy.
+- Persistent Qdrant vector storage with deterministic point IDs
+- Vector-only, BM25 and 70/30 hybrid retrieval
+- Role filtering before retrieval ranking
+- Governed incremental synchronization, audit records and failure quarantine
+- Citation-backed extractive answers and safe refusal behavior
+- FastAPI endpoints for health, statistics, search and answers
+- Gradio-based interactive local demonstration
+- Docker Compose stack with Qdrant, indexer, API and demo services
+- GitHub Actions workflow for containerized verification
 
 ## Verified quality results
 
@@ -36,7 +32,8 @@ The corpus is deliberately small and synthetic. Results demonstrate reproducible
 | Expected citation recall | 100% (20/20) |
 | Safe refusal rate | 100% (3/3) |
 | Unauthorized restricted retrievals | 0 |
-| Full automated suite | 27/27 passed |
+| Complete automated suite | 27/27 passed |
+| Containerized API health | 26 stored vectors |
 
 See [METRICS.md](METRICS.md) for reproducible evidence and limitations.
 
@@ -62,7 +59,10 @@ Qdrant vector storage          |
         +---- role-aware hybrid retrieval
                            |
                            v
-Answerability gate -> grounded extractive answer -> citations or safe refusal
+Answerability gate -> grounded answer -> citations or safe refusal
                            |
                            v
-FastAPI service -> Swagger API docs and local Gradio demo
+FastAPI service -> Swagger docs and Gradio demonstration
+                           |
+                           v
+Docker Compose -> GitHub Actions verification

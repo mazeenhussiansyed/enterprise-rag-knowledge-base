@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+artifacts/
+data/audit/
+data/ingestion/
+data/ingested/
+data/quarantine/
+*.egg-info/

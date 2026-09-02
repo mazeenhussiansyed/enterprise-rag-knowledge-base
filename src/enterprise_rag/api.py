@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -17,7 +18,12 @@ from .retrieval import QdrantHybridRetriever
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_CORPUS_PATH = PROJECT_ROOT / "data" / "corpus" / "chunks.jsonl"
+DEFAULT_CORPUS_PATH = Path(
+    os.getenv(
+        "RAG_CORPUS_PATH",
+        str(PROJECT_ROOT / "data" / "corpus" / "chunks.jsonl"),
+    )
+)
 
 
 class RetrievalRequest(BaseModel):
@@ -63,11 +69,18 @@ RuntimeFactory = Callable[[], EnterpriseRAGRuntime]
 
 
 def build_runtime() -> EnterpriseRAGRuntime:
-    """Build the live local runtime after Qdrant is available."""
+    """Build the live runtime after Qdrant is available."""
 
     chunks = load_chunks(DEFAULT_CORPUS_PATH)
     provider = MiniLMEmbeddingProvider()
-    store = QdrantVectorStore()
+
+    store = QdrantVectorStore(
+        url=os.getenv("QDRANT_URL", "http://localhost:6333"),
+        collection_name=os.getenv(
+            "QDRANT_COLLECTION",
+            QdrantVectorStore.DEFAULT_COLLECTION,
+        ),
+    )
 
     if not store.client.collection_exists(store.collection_name):
         raise RuntimeError(

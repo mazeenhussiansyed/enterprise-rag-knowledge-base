@@ -87,6 +87,16 @@ Only rows marked **Yes** may be used as measured project evidence.
 | Interactive demo answered scenarios | MFA, privileged access and vendor-contract examples | 3/3 role-matched answers | `python scripts/run_demo.py` | Yes, 2026-09-01 |
 | Interactive demo refusal scenario | Unsupported cafeteria question | 1/1 safe refusal | `python scripts/run_demo.py` | Yes, 2026-09-01 |
 | Local service exposure | FastAPI and Gradio loopback services | `127.0.0.1:8000`, `127.0.0.1:7860` | Launch commands in README | Yes, 2026-09-01 |
+## M07 containerized deployment and continuous integration
+
+| Metric | Configuration | Result | Evidence command | Verified |
+|---|---|---:|---|---|
+| Containerized services | Qdrant, indexer, API and Gradio demo | 4 services | `docker compose up --build -d --wait --wait-timeout 180` | Yes, 2026-09-01 |
+| Corpus indexing in Compose | MiniLM plus Qdrant | 26 stored points | `curl -sS http://127.0.0.1:8000/health` | Yes, 2026-09-01 |
+| Containerized API health | FastAPI `/health` | `status: ok` | `curl -sS http://127.0.0.1:8000/health` | Yes, 2026-09-01 |
+| Persistent model cache | Docker named volume | Warm rebuild completed successfully | `docker compose up --build -d --wait --wait-timeout 180` | Yes, 2026-09-01 |
+| Complete local test suite | Unit, API and live Qdrant tests | 27/27 passed | `RUN_QDRANT_INTEGRATION=1 python -m unittest discover -s tests -v` | Yes, 2026-09-01 |
+| GitHub Actions workflow | Docker build, health validation and tests | Configured | `.github/workflows/verify.yml` | No — pending first green run |
 
 ## Benchmark integrity
 
